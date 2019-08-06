@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -11,14 +14,33 @@ var (
 	botID         string
 )
 
+func getToken() string {
+	file, err := os.Open("TOKEN")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	re := ""
+
+	for scanner.Scan() {
+		re += scanner.Text()
+	}
+
+	return re
+}
+
 //Some core basics to get going
 func main() {
-	discord, err := discordgo.New("Bot <BOT KEY>")
+	fmt.Println(getToken())
+	discord, err := discordgo.New(getToken())
 	errCheck("error creating discord session", err)
-	user, err := discord.User("@me")
+	//_, err := discord.User("@me")
 	errCheck("error retrieving account", err)
 
-	botID := user.ID
+	//botID := user.ID
 	discord.AddHandler(commandHandler)
 	discord.AddHandler(func(discord *discordgo.Session, ready *discordgo.Ready) {
 		err = discord.UpdateStatus(0, "A Friendly bot!")
@@ -51,7 +73,7 @@ func commandHandler(discord *discordgo.Session, message *discordgo.MessageCreate
 		return
 	}
 
-	content := message.Content
+	//content := message.Content
 
 	fmt.Printf("Message: %+v || From: %s\n", message.Message, message.Author)
 }
