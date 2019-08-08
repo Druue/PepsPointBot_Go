@@ -1,46 +1,41 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"log"
-	"os"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-var (
-	commandPrefix string
-	botID         string
-)
-
-func getToken() string {
-	file, err := os.Open("TOKEN")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	re := ""
-
-	for scanner.Scan() {
-		re += scanner.Text()
-	}
-
-	return re
-}
+var commandPrefix = "?"
+var funcMap = make(map[string]func(arg []string, message *discordgo.MessageCreate) (response string))
 
 //Some core basics to get going
 func main() {
-	fmt.Println(getToken())
-	discord, err := discordgo.New(getToken())
+	discord, err := discordgo.New("Bot " + getToken())
 	errCheck("error creating discord session", err)
-	//_, err := discord.User("@me")
-	errCheck("error retrieving account", err)
 
-	//botID := user.ID
+	funcMap["set-name"] = func(arg []string, message *discordgo.MessageCreate) string {
+		//TODO check to make sure arg[0] is valid and good and has a nice cup of coofie and all that user input sanitization
+		if len(arg) != 1 {
+			return "wrong number of arguments"
+		}
+		setName(message.Author.ID, arg[0])
+		return ":thumbsup:"
+	}
+
+	funcMap["get-name"] = func(arg []string, message *discordgo.MessageCreate) string {
+		return getNameOr(message.Author.ID, message.Author.Username)
+	}
+
+	funcMap["give"] = func(arg []string, message *discordgo.MessageCreate) string {
+		if len(arg) != 2 {
+			return "wrong number of arguments"
+		}
+		//todo: actually make the thing
+		return ":thumbsup:"
+	}
+
 	discord.AddHandler(commandHandler)
 	discord.AddHandler(func(discord *discordgo.Session, ready *discordgo.Ready) {
 		err = discord.UpdateStatus(0, "A Friendly bot!")
@@ -53,10 +48,8 @@ func main() {
 	})
 
 	err = discord.Open()
-	errCheck("Error opening connection to Discord", err)
 	defer discord.Close()
 
-	commandPrefix = "!"
 	<-make(chan struct{})
 }
 
@@ -69,11 +62,19 @@ func errCheck(msg string, err error) {
 
 func commandHandler(discord *discordgo.Session, message *discordgo.MessageCreate) {
 	user := message.Author
-	if user.ID == botID || user.Bot {
+	if user.Bot {
 		return
 	}
-
-	//content := message.Content
-
-	fmt.Printf("Message: %+v || From: %s\n", message.Message, message.Author)
+	if string(message.Content[0]) == commandPrefix {
+		rawMessage := strings.Split(string(message.Content[1:]), " ")
+		funcName := rawMessage[0]
+		args := rawMessage[1:]
+		fun, ok := funcMap[funcName]
+		if ok {
+			_, err := discord.ChannelMessageSend(message.ChannelID, fun(args, message))
+			errCheck("", err)
+		} else {
+			discord.ChannelMessageSend(message.ChannelID, "function couldnt be found")
+		}
+	}
 }
