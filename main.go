@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -32,7 +33,15 @@ func main() {
 		if len(arg) != 2 {
 			return "wrong number of arguments"
 		}
-		//todo: actually make the thing
+		recipient, ok := parseUserIDFromAt(arg[0])
+		if !ok {
+			return ":thumbsdown:, could not parse first argument"
+		}
+		amount, err := strconv.ParseInt(arg[1], 10, 64)
+		if err != nil {
+			return ":thumbsdown:, second argument is not a number"
+		}
+		addPoint(message.Author.ID, recipient, int(amount))
 		return ":thumbsup:"
 	}
 

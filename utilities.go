@@ -23,3 +23,13 @@ func getToken() string {
 
 	return re
 }
+
+func parseUserIDFromAt(user string) (string, bool) {
+	if len(user) < 2 {
+		return "", false
+	}
+	if !(user[0:2] == "<@" && user[len(user)-1:] == ">") {
+		return "", false
+	}
+	return user[2 : len(user)-1], true
+}
