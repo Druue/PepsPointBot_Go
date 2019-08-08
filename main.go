@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -9,11 +10,17 @@ import (
 
 var commandPrefix = "?"
 var funcMap = make(map[string]func(arg []string, message *discordgo.MessageCreate) (response string))
+var (
+	DB *sql.DB
+)
 
 //Some core basics to get going
 func main() {
 	discord, err := discordgo.New("Bot " + getToken())
-	errCheck("error creating discord session", err)
+	errCheck("Error creating discord session", err)
+
+	DB, err := openDBConnection("CONNECTION STRING - NYI")
+	errCheck("Error estabilishing database session", err)
 
 	funcMap["set-name"] = func(arg []string, message *discordgo.MessageCreate) string {
 		//TODO check to make sure arg[0] is valid and good and has a nice cup of coofie and all that user input sanitization
@@ -49,6 +56,7 @@ func main() {
 
 	err = discord.Open()
 	defer discord.Close()
+	defer DB.Close()
 
 	<-make(chan struct{})
 }
@@ -74,7 +82,7 @@ func commandHandler(discord *discordgo.Session, message *discordgo.MessageCreate
 			_, err := discord.ChannelMessageSend(message.ChannelID, fun(args, message))
 			errCheck("", err)
 		} else {
-			discord.ChannelMessageSend(message.ChannelID, "function couldnt be found")
+			discord.ChannelMessageSend(message.ChannelID, "function couldn't be found")
 		}
 	}
 }
