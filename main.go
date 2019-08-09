@@ -49,7 +49,7 @@ func main() {
 		if err != nil {
 			return ":thumbsdown:, second argument is not a number"
 		}
-		addPoint(message.Author.ID, recipient, int(amount))
+		addTransaction(message.Author.ID, recipient, int(amount))
 		return ":thumbsup:"
 	}
 
