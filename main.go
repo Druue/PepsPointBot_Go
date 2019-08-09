@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,18 +9,25 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var commandPrefix = "?"
-var funcMap = make(map[string]func(arg []string, message *discordgo.MessageCreate) (response string))
+var (
+	funcMap       = make(map[string]func(arg []string, message *discordgo.MessageCreate) (response string))
+	commandPrefix = "?"
+	DB            *sql.DB
+)
 
 //Some core basics to get going
 func main() {
 	discord, err := discordgo.New("Bot " + getToken())
-	errCheck("error creating discord session", err)
+	errCheck("Error creating discord session", err)
+
+	DB, err := openDBConnection("CONNECTION STRING - NYI")
+	errCheck("Error estabilishing database session", err)
 
 	funcMap["set-name"] = func(arg []string, message *discordgo.MessageCreate) string {
-		//TODO check to make sure arg[0] is valid and good and has a nice cup of coofie and all that user input sanitization
+		// TODO check to make sure arg[0] is valid and good and
+		// has a nice cup of coofie and all that user input sanitization
 		if len(arg) != 1 {
-			return "wrong number of arguments"
+			return "Invalid number of arguments"
 		}
 		setName(message.Author.ID, arg[0])
 		return ":thumbsup:"
@@ -31,7 +39,7 @@ func main() {
 
 	funcMap["give"] = func(arg []string, message *discordgo.MessageCreate) string {
 		if len(arg) != 2 {
-			return "wrong number of arguments"
+			return "Invalid number of arguments!"
 		}
 		recipient, ok := parseUserIDFromAt(arg[0])
 		if !ok {
@@ -48,9 +56,7 @@ func main() {
 	discord.AddHandler(commandHandler)
 	discord.AddHandler(func(discord *discordgo.Session, ready *discordgo.Ready) {
 		err = discord.UpdateStatus(0, "A Friendly bot!")
-		if err != nil {
-			fmt.Println("Error attempting to set status")
-		}
+		errCheck("Error attempting to set status", err)
 
 		servers := discord.State.Guilds
 		fmt.Printf("BOT has started on %d servers", len(servers))
@@ -58,6 +64,7 @@ func main() {
 
 	err = discord.Open()
 	defer discord.Close()
+	defer DB.Close()
 
 	<-make(chan struct{})
 }
@@ -81,9 +88,9 @@ func commandHandler(discord *discordgo.Session, message *discordgo.MessageCreate
 		fun, ok := funcMap[funcName]
 		if ok {
 			_, err := discord.ChannelMessageSend(message.ChannelID, fun(args, message))
-			errCheck("", err)
+			errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
 		} else {
-			discord.ChannelMessageSend(message.ChannelID, "function couldnt be found")
+			discord.ChannelMessageSend(message.ChannelID, "Invalid command")
 		}
 	}
 }
