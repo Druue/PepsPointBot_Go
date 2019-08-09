@@ -9,8 +9,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var names = make(map[string]string)
-var transactions []*Transaction
+var (
+	transactions []*Transaction
+	names        = make(map[string]string)
+)
 
 type Transaction struct {
 	origin    string
@@ -69,9 +71,9 @@ func getPointsList() []UserInfo {
 
 	rows, err := DB.Query("SELECT user_id, name FROM user_info")
 	logErr(err)
+	defer rows.Close()
 
 	var users []UserInfo
-
 	for rows.Next() {
 		err := rows.Scan(&id, &name)
 		logErr(err)
