@@ -14,17 +14,20 @@ var (
 	names        = make(map[string]string)
 )
 
+//Transaction all transactions between users
 type Transaction struct {
 	origin    string
 	recipient string
 	amount    int
 }
 
+//Points the amount and who have the points
 type Points struct {
 	origin string
 	amount int
 }
 
+//UserInfo a users id, name and points
 type UserInfo struct {
 	id     int
 	name   string

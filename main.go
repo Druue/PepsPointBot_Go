@@ -12,7 +12,8 @@ import (
 var (
 	funcMap       = make(map[string]func(arg []string, message *discordgo.MessageCreate) (response string))
 	commandPrefix = "?"
-	DB            *sql.DB
+	//DB varaible to handle sql connection
+	DB *sql.DB
 )
 
 //Some core basics to get going
