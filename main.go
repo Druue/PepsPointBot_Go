@@ -21,8 +21,11 @@ func main() {
 	discord, err := discordgo.New("Bot " + getToken())
 	errCheck("Error creating discord session", err)
 
-	DB, err := openDBConnection("CONNECTION STRING - NYI")
-	errCheck("Error estabilishing database session", err)
+	/*
+		DB, err := openDBConnection("CONNECTION STRING - NYI")
+		errCheck("Error estabilishing database session", err)
+		defer DB.Close()
+	*/
 
 	funcMap["set-name"] = func(arg []string, message *discordgo.MessageCreate) string {
 		// TODO check to make sure arg[0] is valid and good and
@@ -44,14 +47,15 @@ func main() {
 		}
 		recipient, ok := parseUserIDFromAt(arg[0])
 		if !ok {
-			return ":thumbsdown:, could not parse first argument"
+			return fmt.Sprintf("Recipient not defined, what is a %s :thinking:", arg[0])
 		}
 		amount, err := strconv.ParseInt(arg[1], 10, 64)
 		if err != nil {
-			return ":thumbsdown:, second argument is not a number"
+			return fmt.Sprintf("%s is not a number :thumbsdown:", arg[1])
 		}
-		addTransaction(message.Author.ID, recipient, int(amount))
-		return ":thumbsup:"
+		//logTransaction(message.Author.ID, recipient, int(amount))
+		return fmt.Sprintf("%s has given %d points to %s :thumbsup:",
+			message.Author.ID, amount, recipient)
 	}
 
 	discord.AddHandler(commandHandler)
@@ -65,7 +69,6 @@ func main() {
 
 	err = discord.Open()
 	defer discord.Close()
-	defer DB.Close()
 
 	<-make(chan struct{})
 }
