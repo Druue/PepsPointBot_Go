@@ -12,7 +12,7 @@ var (
 	names        = make(map[string]string)
 )
 
-//Transaction all transactions between users
+//Transaction all transactions between users - Deprecated
 type Transaction struct {
 	origin    string
 	recipient string
@@ -49,8 +49,16 @@ func openDBConnection(dbCon string) (*sql.DB, error) {
 	user_info						transaction_info
 
 	id      |  name  |				giver  | recipient | amount
-	int		| string |				string |  string   | int
+	string  | string |				string |  string   | int
 */
+
+func logName(id string, name string) {
+	updateName := `
+		INSERT OR REPLACE INTO user_info(id, name)
+		VALUES(?, ?)`
+	_, err := DB.Exec(updateName, id, name)
+	logErr(err)
+}
 
 func logTransaction(giver string, recipient string, amount int) {
 	insertTransaction := `

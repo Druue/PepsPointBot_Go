@@ -27,14 +27,23 @@ func main() {
 		defer DB.Close()
 	*/
 
+	funcMap["set-prefix"] = func(arg []string, message *discordgo.MessageCreate) string {
+		if len(arg) != 1 {
+			return "Invalid number of arguments"
+		}
+		commandPrefix = arg[0]
+
+		return fmt.Sprintf("Command prefix changed to %s", commandPrefix)
+	}
+
 	funcMap["set-name"] = func(arg []string, message *discordgo.MessageCreate) string {
 		// TODO check to make sure arg[0] is valid and good and
 		// has a nice cup of coofie and all that user input sanitization
 		if len(arg) != 1 {
 			return "Invalid number of arguments"
 		}
-		setName(message.Author.ID, arg[0])
-		return ":thumbsup:"
+		//logName(message.Author.ID, arg[0])
+		return fmt.Sprintf("Set %s's name to be %s :thumbsup:", message.Author.ID, arg[0])
 	}
 
 	funcMap["get-name"] = func(arg []string, message *discordgo.MessageCreate) string {
@@ -90,6 +99,7 @@ func commandHandler(discord *discordgo.Session, message *discordgo.MessageCreate
 	if user.Bot {
 		return
 	}
+
 	if string(message.Content[0]) == commandPrefix {
 		rawMessage := strings.Split(string(message.Content[1:]), " ")
 		funcName := rawMessage[0]
