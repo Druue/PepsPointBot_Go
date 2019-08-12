@@ -29,9 +29,7 @@ func errCheck(msg string, err error) {
 
 func getToken() string {
 	file, err := os.Open("TOKEN")
-	if err != nil {
-		log.Fatal(err)
-	}
+	logErr(err)
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
