@@ -66,6 +66,18 @@ func main() {
 		servers := discord.State.Guilds
 		fmt.Printf("BOT has started on %d servers", len(servers))
 	})
+	discord.AddHandler(func(s *discordgo.Session, event *discordgo.GuildCreate) {
+		if event.Guild.Unavailable {
+			return
+		}
+
+		for _, channel := range event.Guild.Channels {
+			if channel.ID == event.Guild.ID {
+				_, _ = s.ChannelMessageSend(channel.ID, "hey ho, lets go")
+				return
+			}
+		}
+	})
 
 	err = discord.Open()
 	defer discord.Close()
