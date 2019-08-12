@@ -2,8 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
 
 	. "github.com/ahmetb/go-linq"
 	_ "github.com/mattn/go-sqlite3"
@@ -45,18 +43,6 @@ func openDBConnection(dbCon string) (*sql.DB, error) {
 	}
 
 	return conn, nil
-}
-
-func noRows(err error) {
-	if err == sql.ErrNoRows {
-		fmt.Println("No rows to return!")
-	}
-}
-
-func logErr(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 /*

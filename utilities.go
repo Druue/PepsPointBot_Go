@@ -2,9 +2,30 @@ package main
 
 import (
 	"bufio"
+	"database/sql"
+	"fmt"
 	"log"
 	"os"
 )
+
+func noRows(err error) {
+	if err == sql.ErrNoRows {
+		fmt.Println("No rows to return!")
+	}
+}
+
+func logErr(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func errCheck(msg string, err error) {
+	if err != nil {
+		fmt.Printf("%s: %+v", msg, err)
+		panic(err)
+	}
+}
 
 func getToken() string {
 	file, err := os.Open("TOKEN")

@@ -73,13 +73,6 @@ func main() {
 	<-make(chan struct{})
 }
 
-func errCheck(msg string, err error) {
-	if err != nil {
-		fmt.Printf("%s: %+v", msg, err)
-		panic(err)
-	}
-}
-
 func commandHandler(discord *discordgo.Session, message *discordgo.MessageCreate) {
 	user := message.Author
 	if user.Bot {
