@@ -66,6 +66,14 @@ func logErr(err error) {
 	int		| string |				string |  string   | int
 */
 
+func logTransaction(giver string, recipient string, amount int) {
+	insertTransaction := `
+		INSERT INTO transaction_info (giver, recipient, amount)
+		VALUES (?, ?, ?)`
+	_, err := DB.Exec(insertTransaction, giver, recipient, amount)
+	logErr(err)
+}
+
 func getPointsList() []UserInfo {
 	var (
 		id   int
