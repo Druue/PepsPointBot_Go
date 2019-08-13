@@ -8,6 +8,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+//Function struct handles the varying parts that go into the various bot commands
+//Their name, their description, their actual definition etc
 type Function struct {
 	name           string
 	description    string
@@ -17,6 +19,7 @@ type Function struct {
 	maxArgsLen     int
 }
 
+//NewFunction -> Constructor for the Function struct
 func NewFunction(name string, def func(arg []string, message *discordgo.MessageCreate) (response string), minArgsLen int, maxArgsLen int) *Function {
 	description, argDescription := getDescription(name)
 	if len(argDescription) != maxArgsLen {
@@ -57,7 +60,6 @@ func givePoints(arg []string, message *discordgo.MessageCreate) string {
 	if !ok {
 		return fmt.Sprintf("Recipient not defined, what is a \"%s\" :thinking:", arg[0])
 	}
-	fmt.Println(discord)
 	recipient, err := discord.GuildMember(message.GuildID, recipientID)
 	if err != nil {
 		panic(err)
@@ -66,7 +68,7 @@ func givePoints(arg []string, message *discordgo.MessageCreate) string {
 	if err != nil {
 		return fmt.Sprintf("%s is not a number :thumbsdown:", arg[1])
 	}
-	//logTransaction(message.Author.ID, recipient, int(amount))
+	logTransaction(message.Author.ID, recipientID, int(amount))
 	var recipientBackupName string
 	if recipient.Nick == "" {
 		recipientBackupName = recipient.User.Username

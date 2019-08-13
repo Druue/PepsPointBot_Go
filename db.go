@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 
 	. "github.com/ahmetb/go-linq"
 	_ "github.com/mattn/go-sqlite3"
@@ -61,6 +62,7 @@ func logName(id string, name string) {
 }
 
 func logTransaction(giver string, recipient string, amount int) {
+	fmt.Printf("\nWe made it to logTransaction()")
 	insertTransaction := `
 		INSERT INTO transaction_info (giver, recipient, amount)
 		VALUES (?, ?, ?)`
@@ -151,6 +153,10 @@ func getUserPointsFromGiver(userid int, giverid int) Points {
 		logErr(err)
 
 		points.amount += currPoints
+		if points.amount < 0 {
+			points.amount = 0
+			return points
+		}
 	}
 
 	return points

@@ -22,11 +22,10 @@ func main() {
 	discord = localDiscord
 	errCheck("Error creating discord session", err)
 
-	/*
-		DB, err := openDBConnection("CONNECTION STRING - NYI")
-		errCheck("Error estabilishing database session", err)
-		defer DB.Close()
-	*/
+	DB, err := openDBConnection("Data Source=./PepPointsDBTest.db;Version=3") //??
+	errCheck("Error estabilishing database session", err)
+	defer DB.Close()
+
 	funcName := "help"
 	funcMap[funcName] = NewFunction(funcName, help, 0, 0)
 
