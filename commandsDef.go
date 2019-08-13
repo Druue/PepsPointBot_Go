@@ -63,7 +63,7 @@ func givePoints(arg []string, message *discordgo.MessageCreate) string {
 	}
 	//logTransaction(message.Author.ID, recipient, int(amount))
 	return fmt.Sprintf("%s has given %d points to %s :thumbsup:",
-		message.Author.ID, amount, recipient)
+		getNameOr(message.Author.ID, message.Author.Username), amount, recipient)
 }
 
 func helpCommands() string {
