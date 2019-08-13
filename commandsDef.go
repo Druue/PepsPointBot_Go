@@ -57,6 +57,7 @@ func givePoints(arg []string, message *discordgo.MessageCreate) string {
 	if !ok {
 		return fmt.Sprintf("Recipient not defined, what is a \"%s\" :thinking:", arg[0])
 	}
+	fmt.Println(discord)
 	recipient, err := discord.GuildMember(message.GuildID, recipientID)
 	if err != nil {
 		panic(err)
@@ -66,8 +67,24 @@ func givePoints(arg []string, message *discordgo.MessageCreate) string {
 		return fmt.Sprintf("%s is not a number :thumbsdown:", arg[1])
 	}
 	//logTransaction(message.Author.ID, recipient, int(amount))
+	var recipientBackupName string
+	if recipient.Nick == "" {
+		recipientBackupName = recipient.User.Username
+	} else {
+		recipientBackupName = recipient.Nick
+	}
+	sender, err := discord.GuildMember(message.GuildID, message.Author.ID)
+	if err != nil {
+		return fmt.Sprintf("%s is not a number :thumbsdown:", arg[1])
+	}
+	var senderBackupName string
+	if sender.Nick == "" {
+		senderBackupName = sender.User.Username
+	} else {
+		senderBackupName = sender.Nick
+	}
 	return fmt.Sprintf("%s has given %d points to %s :thumbsup:",
-		getNameOr(message.Author.ID, message.Author.Username), amount, getNameOr(recipientID, recipient.Nick))
+		getNameOr(sender.User.ID, senderBackupName), amount, getNameOr(recipientID, recipientBackupName))
 }
 
 func helpCommands() string {

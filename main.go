@@ -18,7 +18,8 @@ var (
 
 //Some core basics to get going
 func main() {
-	discord, err := discordgo.New("Bot " + getToken())
+	localDiscord, err := discordgo.New("Bot " + getToken())
+	discord = localDiscord
 	errCheck("Error creating discord session", err)
 
 	/*
