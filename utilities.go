@@ -52,3 +52,24 @@ func parseUserIDFromAt(user string) (string, bool) {
 	}
 	return user[2 : len(user)-1], true
 }
+
+func getDescription(funcName string) string {
+	var descript string
+
+	switch funcName {
+	case "help":
+		descript = fmt.Sprintf("%s\n -> Returns the list of commands and their descriptions", funcName)
+	case "set-prefix":
+		descript = fmt.Sprintf("%s\n -> Updates the prefix that the bot uses to identify commands", funcName)
+	case "set-name":
+		descript = fmt.Sprintf("%s @name#discriminant\n -> Sets the nickname of target user", funcName)
+	case "get-name":
+		descript = fmt.Sprintf("%s\n -> Returns the list of commands and their descriptions", funcName)
+	case "give":
+		descript = fmt.Sprintf("%s @name#discriminant x\n -> Gives target user x points", funcName)
+	default:
+		panic(fmt.Sprintf("%v", "No such function exists!"))
+	}
+
+	return descript
+}

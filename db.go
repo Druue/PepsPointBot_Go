@@ -158,17 +158,17 @@ func getUserPointsFromGiver(userid int, giverid int) Points {
 
 // IGNORE -- LOCAL TESTING
 
-func setName(id string, name string) {
+func setNameTest(id string, name string) {
 	names[id] = name
 }
 
-func getName(id string) (string, bool) {
+func getNameTest(id string) (string, bool) {
 	name, ok := names[id]
 	return name, ok
 }
 
 func getNameOr(id string, otherwise string) string {
-	name, ok := getName(id)
+	name, ok := getNameTest(id)
 	if ok {
 		return name
 	}

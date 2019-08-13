@@ -3,14 +3,13 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 var (
-	funcMap       = make(map[string]func(arg []string, message *discordgo.MessageCreate) (response string))
+	funcMap       = make(map[string]*Function)
 	commandPrefix = "?"
 	//DB varaible to handle sql connection
 	DB *sql.DB
@@ -26,46 +25,20 @@ func main() {
 		errCheck("Error estabilishing database session", err)
 		defer DB.Close()
 	*/
+	funcName := "help"
+	funcMap[funcName] = NewFunction(funcName, getDescription(funcName), help)
 
-	funcMap["set-prefix"] = func(arg []string, message *discordgo.MessageCreate) string {
-		if len(arg) != 1 {
-			return "Invalid number of arguments"
-		}
-		commandPrefix = arg[0]
+	funcName = "set-prefix"
+	funcMap[funcName] = NewFunction(funcName, getDescription(funcName), setPrefix)
 
-		return fmt.Sprintf("Command prefix changed to %s", commandPrefix)
-	}
+	funcName = "set-name"
+	funcMap[funcName] = NewFunction(funcName, getDescription(funcName), setName)
 
-	funcMap["set-name"] = func(arg []string, message *discordgo.MessageCreate) string {
-		// TODO check to make sure arg[0] is valid and good and
-		// has a nice cup of coofie and all that user input sanitization
-		if len(arg) != 1 {
-			return "Invalid number of arguments"
-		}
-		//logName(message.Author.ID, arg[0])
-		return fmt.Sprintf("Set %s's name to be %s :thumbsup:", message.Author.ID, arg[0])
-	}
+	funcName = "get-name"
+	funcMap[funcName] = NewFunction(funcName, getDescription(funcName), getName)
 
-	funcMap["get-name"] = func(arg []string, message *discordgo.MessageCreate) string {
-		return getNameOr(message.Author.ID, message.Author.Username)
-	}
-
-	funcMap["give"] = func(arg []string, message *discordgo.MessageCreate) string {
-		if len(arg) != 2 {
-			return "Invalid number of arguments!"
-		}
-		recipient, ok := parseUserIDFromAt(arg[0])
-		if !ok {
-			return fmt.Sprintf("Recipient not defined, what is a %s :thinking:", arg[0])
-		}
-		amount, err := strconv.ParseInt(arg[1], 10, 64)
-		if err != nil {
-			return fmt.Sprintf("%s is not a number :thumbsdown:", arg[1])
-		}
-		//logTransaction(message.Author.ID, recipient, int(amount))
-		return fmt.Sprintf("%s has given %d points to %s :thumbsup:",
-			message.Author.ID, amount, recipient)
-	}
+	funcName = "give"
+	funcMap[funcName] = NewFunction(funcName, getDescription(funcName), givePoints)
 
 	discord.AddHandler(commandHandler)
 	discord.AddHandler(func(discord *discordgo.Session, ready *discordgo.Ready) {
@@ -82,7 +55,7 @@ func main() {
 
 		for _, channel := range event.Guild.Channels {
 			if channel.ID == event.Guild.ID {
-				_, _ = s.ChannelMessageSend(channel.ID, "hey ho, lets go")
+				_, _ = s.ChannelMessageSend(channel.ID, helpCommands())
 				return
 			}
 		}
@@ -106,7 +79,7 @@ func commandHandler(discord *discordgo.Session, message *discordgo.MessageCreate
 		args := rawMessage[1:]
 		fun, ok := funcMap[funcName]
 		if ok {
-			_, err := discord.ChannelMessageSend(message.ChannelID, fun(args, message))
+			_, err := discord.ChannelMessageSend(message.ChannelID, fun.def(args, message, 0, 0))
 			errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
 		} else {
 			discord.ChannelMessageSend(message.ChannelID, "Invalid command")
