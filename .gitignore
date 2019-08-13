@@ -36,4 +36,5 @@
 
 # End of https://www.gitignore.io/api/go,visualstudiocode
 TOKEN
+PepPointsBot
 start.cmd
