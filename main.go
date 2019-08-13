@@ -12,7 +12,8 @@ var (
 	funcMap       = make(map[string]*Function)
 	commandPrefix = "?"
 	//DB varaible to handle sql connection
-	DB *sql.DB
+	DB      *sql.DB
+	discord *discordgo.Session
 )
 
 //Some core basics to get going
