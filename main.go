@@ -52,11 +52,12 @@ func main() {
 	})
 	discord.AddHandler(func(s *discordgo.Session, event *discordgo.GuildCreate) {
 		if event.Guild.Unavailable {
+			fmt.Printf("\nHi, the bot was here")
 			return
 		}
 
 		for _, channel := range event.Guild.Channels {
-			if channel.ID == event.Guild.ID {
+			if channel.Name == "general" {
 				_, _ = s.ChannelMessageSend(channel.ID, helpCommands())
 				return
 			}
