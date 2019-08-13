@@ -53,23 +53,25 @@ func parseUserIDFromAt(user string) (string, bool) {
 	return user[2 : len(user)-1], true
 }
 
-func getDescription(funcName string) string {
-	var descript string
-
+func getDescription(funcName string) (string, []string) {
+	var slice []string
 	switch funcName {
 	case "help":
-		descript = fmt.Sprintf("%s\n -> Returns the list of commands and their descriptions", funcName)
+		slice = []string{}
+		return "Returns the list of commands and their descriptions", slice
 	case "set-prefix":
-		descript = fmt.Sprintf("%s\n -> Updates the prefix that the bot uses to identify commands", funcName)
+		slice = []string{"the new prefix"}
+		return "Updates the prefix that the bot uses to identify commands", slice
 	case "set-name":
-		descript = fmt.Sprintf("%s @name#discriminant\n -> Sets the nickname of target user", funcName)
+		slice = []string{"your new name"}
+		return "Sets your own name, which the bot uses when printing how many points people have", slice
 	case "get-name":
-		descript = fmt.Sprintf("%s\n -> Returns the list of commands and their descriptions", funcName)
+		slice = []string{}
+		return "return the name this bot uses to refeer to you", slice
 	case "give":
-		descript = fmt.Sprintf("%s @name#discriminant x\n -> Gives target user x points", funcName)
+		slice = []string{"the user in question", "the amount of points (must be a string)"}
+		return "Gives a user an amount of your points", slice
 	default:
 		panic(fmt.Sprintf("%v", "No such function exists!"))
 	}
-
-	return descript
 }
