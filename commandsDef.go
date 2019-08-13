@@ -57,7 +57,7 @@ func givePoints(arg []string, message *discordgo.MessageCreate) string {
 	if !ok {
 		return fmt.Sprintf("Recipient not defined, what is a \"%s\" :thinking:", arg[0])
 	}
-	recipient, err := discord.GuildMember(message.GuildID, recipient)
+	recipient, err := discord.GuildMember(message.GuildID, recipientID)
 	if err != nil {
 		panic(err)
 	}
