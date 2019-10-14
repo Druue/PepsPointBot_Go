@@ -33,36 +33,32 @@ func parseUserIDFromAt(user string) (string, bool) {
 	if !(user[0:2] == "<@" && user[len(user)-1:] == ">") {
 		return "", false
 	}
-	return user[2 : len(user)-1], true
+	first := user[2 : len(user)-1]
+	if first[0:1] == "!" {
+		return first[1:], true
+	}
+	return first, true
 }
 
-func getDescription(funcName string) (string, []string) {
-	var slice []string
-	switch funcName {
-	case "help":
-		slice = []string{}
-		return "Returns the list of commands and their descriptions", slice
-	case "set-prefix":
-		slice = []string{"the new prefix"}
-		return "Updates the prefix that the bot uses to identify commands", slice
-	case "set-nickname":
-		slice = []string{"your new nickname"}
-		return "Sets your own nickname, which the bot uses when printing how many points people have", slice
-	case "get-nickname":
-		slice = []string{}
-		return "return the nickname this bot uses to refeer to you", slice
-	case "give":
-		slice = []string{"the user in question", "the amount of points (must be a string)"}
-		return "Gives a user an amount of your points", slice
-	case "get-points-given":
-		slice = []string{""}
-		return "Gives you the amount of points you have given away", slice
-	case "get-points-received":
-		slice = []string{""}
-		return "Gives you the amount of points other people have given to you", slice
-	default:
-		panic(fmt.Sprintf("%v", "No such function exists!"))
+func getPrintableName(discordId string, guildId string) string {
+	dbUser := getUser(discordId)
+	if dbUser != nil {
+		dbNick := dbUser.nickname
+		if dbNick.Valid {
+			return dbNick.String
+		}
 	}
+	guildMember, err := discord.GuildMember(guildId, discordId)
+	if guildMember == nil {
+		usr, err := discord.User(discordId)
+		errCheck("user doesnt exist or something", err)
+		return usr.Username
+	}
+	errCheck("getting the guild member in getting printable name failed", err)
+	if guildMember.Nick != "" {
+		return guildMember.Nick
+	}
+	return guildMember.User.Username
 }
 
 func waitForMemberFetch(discord *discordgo.Session, cb func(discord *discordgo.Session)) {

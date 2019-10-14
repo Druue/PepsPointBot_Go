@@ -18,8 +18,7 @@ type Secret struct {
 }
 
 var (
-	funcMap       = make(map[string]*Function)
-	commandPrefix = "?"
+	funcMap = make(map[string]*Function)
 	//DB varaible to handle sql connection
 	DB      *sql.DB
 	discord *discordgo.Session
@@ -36,34 +35,60 @@ func main() {
 	defer DB.Close()
 
 	funcName := "help"
-	funcMap[funcName] = NewFunction(funcName, help, 0, 0)
+	funcMap[funcName] = NewFunction(funcName, help, 0, 0, &Description{
+		description:    "Returns the list of commands and their descriptions",
+		argDescription: []string{},
+	})
 
-	funcName = "set-prefix"
-	funcMap[funcName] = NewFunction(funcName, setPrefix, 1, 1)
+	funcName = "prefix"
+	funcMap[funcName] = NewFunction(funcName, setPrefix, 1, 1, &Description{
+		description:    "Updates the prefix that the bot uses to identify commands",
+		argDescription: []string{"Your new prefix"},
+	})
 
-	funcName = "set-nickname"
-	funcMap[funcName] = NewFunction(funcName, setName, 1, 1)
+	funcName = "setnick"
+	funcMap[funcName] = NewFunction(funcName, setNick, 1, 1, &Description{
+		description:    "Sets your own nickname, which the bot uses when printing how many points people have",
+		argDescription: []string{"Your new nickname"},
+	})
 
-	funcName = "get-nickname"
-	funcMap[funcName] = NewFunction(funcName, getName, 0, 0)
+	funcName = "getnick"
+	funcMap[funcName] = NewFunction(funcName, getNick, 0, 0, &Description{
+		description:    "Returns the nickname this bot uses to refer to you",
+		argDescription: []string{},
+	})
 
-	funcName = "give"
-	funcMap[funcName] = NewFunction(funcName, givePoints, 2, 2)
+	funcName = "clearnick"
+	funcMap[funcName] = NewFunction(funcName, clearNick, 0, 0, &Description{
+		description:    "Resets your nickname for the bot",
+		argDescription: []string{},
+	})
 
-	funcName = "get-points-given"
-	funcMap[funcName] = NewFunction(funcName, getPointsGiven, 0, 1)
+	funcName = "givepoints"
+	funcMap[funcName] = NewFunction(funcName, givePoints, 2, 2, &Description{
+		description:    "Gives a user an amount of your points",
+		argDescription: []string{"The user in question", "The amount of points (must be an integer)"},
+	})
 
-	funcName = "get-points-received"
-	funcMap[funcName] = NewFunction(funcName, getPointsReceived, 0, 1)
+	funcName = "points"
+	funcMap[funcName] = NewFunction(funcName, pointsCommand, 0, 1, &Description{
+		description:    "Prints the amount of points",
+		argDescription: []string{"Returns the amount of points you have given to the person being @'ed, if this is not set, it will return all points you have received"},
+	})
 
 	discord.AddHandler(func(discord *discordgo.Session, message *discordgo.MessageCreate) {
 		user := message.Author
 		if user.Bot {
 			return
 		}
+		prefix := getGuildPrefix(message.GuildID)
+		if prefix == nil {
+			fmt.Println("the frick, this shouldnt be nil")
+			return
+		}
 
-		if len(string(message.Content)) > 0 && string(message.Content[0]) == commandPrefix {
-			rawMessage := strings.Split(string(message.Content[1:]), " ")
+		if len(message.Content) > len(*prefix) && message.Content[0:len(*prefix)] == *prefix {
+			rawMessage := strings.Split(message.Content[1:], " ")
 			funcName := rawMessage[0]
 			args := rawMessage[1:]
 			fun, ok := funcMap[funcName]
@@ -88,7 +113,11 @@ func main() {
 	discord.AddHandler(func(discord *discordgo.Session, ready *discordgo.Ready) {
 		err = discord.UpdateStatus(0, "gender non-conformity")
 		errCheck("Error attempting to set status", err)
-
+		var guilds []string
+		for _, s := range ready.Guilds {
+			guilds = append(guilds, s.ID)
+		}
+		startupAddAllGuilds(guilds)
 	})
 	discord.AddHandler(func(s *discordgo.Session, event *discordgo.GuildCreate) {
 		if event.Guild.Unavailable {
@@ -103,7 +132,7 @@ func main() {
 		}
 		startupAddAllUsers(users)
 	})
-	go waitForMemberFetch(discord, func(discord *discordgo.Session) {
+	waitForMemberFetch(discord, func(discord *discordgo.Session) {
 		ready = true
 	})
 

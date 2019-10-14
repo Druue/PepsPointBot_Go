@@ -9,7 +9,7 @@ import (
 
 type User struct {
 	discordId string
-	nickname  string
+	nickname  sql.NullString
 }
 type Points struct {
 	giver    string
@@ -73,6 +73,45 @@ func startupAddAllUsers(users []string) {
 	logErr(err)
 }
 
+func startupAddAllGuilds(guilds []string) {
+	query := "INSERT INTO prefixes (guild_id, prefix) VALUES "
+	values := []interface{}{}
+	for i, s := range guilds {
+		values = append(values, s, "?")
+		numFields := 2
+		n := i * numFields
+
+		query += `(`
+		for j := 0; j < numFields; j++ {
+			query += `$` + strconv.Itoa(n+j+1) + `,`
+		}
+		query = query[:len(query)-1] + `),`
+	}
+	query = query[:len(query)-1]
+	query += "ON CONFLICT DO NOTHING"
+	_, err := DB.Exec(query, values...)
+	logErr(err)
+}
+
+func setPrefixForGuild(guildId string, prefix string) {
+	stmt, err := DB.Prepare("UPDATE prefixes SET prefix = $2 WHERE guild_id = $1")
+	logErr(err)
+	_, err = stmt.Exec(guildId, prefix)
+	logErr(err)
+}
+
+func getGuildPrefix(guildId string) *string {
+	rows, err := DB.Query("SELECT prefix FROM prefixes WHERE guild_id = $1", guildId)
+	logErr(err)
+	for rows.Next() {
+		var prefix string
+		err = rows.Scan(&prefix)
+		logErr(err)
+		return &prefix
+	}
+	return nil
+}
+
 func setUsersNickname(user *User) {
 	stmt, err := DB.Prepare("UPDATE users SET nick_name = $2 WHERE discord_id = $1")
 	logErr(err)
@@ -84,7 +123,7 @@ func getUser(discordId string) *User {
 	rows, err := DB.Query("SELECT nick_name FROM users WHERE discord_id = $1", discordId)
 	logErr(err)
 	for rows.Next() {
-		var nickname string
+		var nickname sql.NullString
 		err = rows.Scan(&nickname)
 		logErr(err)
 		return &User{
@@ -95,7 +134,7 @@ func getUser(discordId string) *User {
 	return nil
 }
 
-func getUsersNicknameOr(discordId string, alternative string) string {
+func getUsersNicknameOr(discordId string, alternative sql.NullString) sql.NullString {
 	user := getUser(discordId)
 	if user == nil {
 		return alternative
@@ -129,6 +168,20 @@ func getUsersPointsReceived(discordId string) ([]*Points, []sql.NullString) {
 		})
 	}
 	return points, nicknames
+}
+
+func getUsersPointsReceivedFromOtherUser(receiverId string, giverId string) sql.NullInt64 {
+	rows, err := DB.Query("SELECT points.amount FROM points WHERE points.id = $1", receiverId+"_"+giverId)
+	logErr(err)
+	for rows.Next() {
+		var amount sql.NullInt64
+		err = rows.Scan(&amount)
+		return amount
+	}
+	return sql.NullInt64{
+		Int64: 0,
+		Valid: false,
+	}
 }
 
 func getUsersPointsGiven(discordId string) ([]*Points, []sql.NullString) {
