@@ -112,6 +112,21 @@ func getGuildPrefix(guildId string) *string {
 	return nil
 }
 
+func getUserFromNickname(nickname string) sql.NullString {
+	rows, err := DB.Query("SELECT discord_id FROM users WHERE nick_name = $1", nickname)
+	logErr(err)
+	for rows.Next() {
+		var discordId sql.NullString
+		err = rows.Scan(&discordId)
+		logErr(err)
+		return discordId
+	}
+	return sql.NullString{
+		String: "",
+		Valid:  false,
+	}
+}
+
 func setUsersNickname(user *User) {
 	stmt, err := DB.Prepare("UPDATE users SET nick_name = $2 WHERE discord_id = $1")
 	logErr(err)
@@ -150,7 +165,7 @@ func giveUserPoints(giver string, receiver string, amount int64) {
 }
 
 func getUsersPointsReceived(discordId string) ([]*Points, []sql.NullString) {
-	rows, err := DB.Query("SELECT points.giver_id, users.nick_name, points.amount FROM points INNER JOIN users ON users.discord_id = points.giver_id WHERE points.receiver_id = $1", discordId)
+	rows, err := DB.Query("SELECT points.giver_id, users.nick_name, points.amount FROM points INNER JOIN users ON users.discord_id = points.giver_id WHERE points.receiver_id = $1 ORDER BY points.amount DESC", discordId)
 	logErr(err)
 	var points []*Points
 	var nicknames []sql.NullString
@@ -185,7 +200,7 @@ func getUsersPointsReceivedFromOtherUser(receiverId string, giverId string) sql.
 }
 
 func getUsersPointsGiven(discordId string) ([]*Points, []sql.NullString) {
-	rows, err := DB.Query("SELECT points.receiver_id, users.nick_name, points.amount FROM points INNER JOIN users ON users.discord_id = points.receiver_id WHERE points.giver_id = $1", discordId)
+	rows, err := DB.Query("SELECT points.receiver_id, users.nick_name, points.amount FROM points INNER JOIN users ON users.discord_id = points.receiver_id WHERE points.giver_id = $1 ORDER BY points.amount DESC", discordId)
 	logErr(err)
 	var points []*Points
 	var nicknames []sql.NullString

@@ -26,11 +26,19 @@ func errCheck(msg string, err error) {
 	}
 }
 
-func parseUserIDFromAt(user string) (string, bool) {
-	if len(user) < 2 {
-		return "", false
-	}
-	if !(user[0:2] == "<@" && user[len(user)-1:] == ">") {
+func parseUserIDFromAt(user string, guildID string) (string, bool) {
+	if !(len(user) > 3 && user[0:2] == "<@" && user[len(user)-1:] == ">") {
+		guild, err := discord.Guild(guildID)
+		errCheck("error \"in parse user id from at\", when finding guilds", err)
+		for _, m := range guild.Members {
+			if m.Nick == user || m.User.Username == user {
+				return m.User.ID, true
+			}
+		}
+		dbUser := getUserFromNickname(user)
+		if dbUser.Valid {
+			return dbUser.String, true
+		}
 		return "", false
 	}
 	first := user[2 : len(user)-1]

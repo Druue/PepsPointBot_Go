@@ -73,7 +73,7 @@ func main() {
 	funcName = "points"
 	funcMap[funcName] = NewFunction(funcName, pointsCommand, 0, 1, &Description{
 		description:    "Prints the amount of points",
-		argDescription: []string{"Returns the amount of points you have given to the person being @'ed, if this is not set, it will return all points you have received"},
+		argDescription: []string{"Returns the amount of points of the pinged user, if this is not set, it will return all points you have received"},
 	})
 
 	discord.AddHandler(func(discord *discordgo.Session, message *discordgo.MessageCreate) {
@@ -103,8 +103,20 @@ func main() {
 					errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
 					return
 				}
-				_, err := discord.ChannelMessageSend(message.ChannelID, fun.def(args, message))
-				errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
+				res, action := fun.def(args, message)
+				switch action {
+				case ResponseReply:
+					_, err := discord.ChannelMessageSend(message.ChannelID, res)
+					errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
+					break
+				case ResponsePM:
+					channel, err := discord.UserChannelCreate(message.Author.ID)
+					errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
+					_, err = discord.ChannelMessageSend(channel.ID, res)
+					errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
+					break
+				}
+
 			} else {
 				discord.ChannelMessageSend(message.ChannelID, "Invalid command")
 			}

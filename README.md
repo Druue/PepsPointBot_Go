@@ -17,3 +17,6 @@ https://github.com/Druue
 3. Commit your changes (`git add {files} && git commit`)
 4. Push to the branch (`git push origin feature/fooBar`)
 5. Create a new Pull Request
+
+##TODO
+when points reach 0 delete entry
