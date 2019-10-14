@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"strconv"
 	"strings"
-
-	"github.com/bwmarrin/discordgo"
 )
 
 type Description struct {
@@ -80,15 +79,24 @@ func help(arg []string, message *discordgo.MessageCreate) (string, ReponseAction
 func setPrefix(arg []string, message *discordgo.MessageCreate) (string, ReponseActionType) {
 	user, err := discord.GuildMember(message.GuildID, message.Author.ID)
 	logErr(err)
+	guildRoles, err := discord.GuildRoles(message.GuildID)
+	logErr(err)
 	for i := 0; i < len(user.Roles); i++ {
-		role := strings.ToLower(user.Roles[i])
-		if role == "admin" || role == "admins" || role == "mods" || role == "mod" {
-			if arg[0] == "" || arg[0] == " " {
-				return "invalid prefixes", ResponseReply
+		role := user.Roles[i]
+		fmt.Println(role)
+		for j := 0; j < len(guildRoles); j++ {
+			if guildRoles[j].ID == role {
+				roleStr := strings.ToLower(guildRoles[j].Name)
+				if roleStr == "admin" || roleStr == "admins" || roleStr == "mods" || roleStr == "mod" {
+					if arg[0] == "" || arg[0] == " " {
+						return "invalid prefixes", ResponseReply
+					}
+					setPrefixForGuild(message.GuildID, arg[0])
+					return fmt.Sprintf("Command prefix changed to %s", arg[0]), ResponseReply
+				}
 			}
-			setPrefixForGuild(message.GuildID, arg[0])
-			return fmt.Sprintf("Command prefix changed to %s", arg[0]), ResponseReply
 		}
+
 	}
 	return "you dont have the rights to do this", ResponseReply
 }
