@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"log"
 )
 
@@ -56,4 +57,22 @@ func getDescription(funcName string) (string, []string) {
 	default:
 		panic(fmt.Sprintf("%v", "No such function exists!"))
 	}
+}
+
+func waitForMemberFetch(discord *discordgo.Session, cb func(discord *discordgo.Session)) {
+	discord.AddHandler(func(discord *discordgo.Session, ready *discordgo.Ready) {
+		for i := 0; i < len(discord.State.Guilds); i++ {
+			err := discord.RequestGuildMembers(discord.State.Guilds[i].ID, "", 2147483647)
+			errCheck("request guild members failed for guild "+discord.State.Guilds[i].Name, err)
+		}
+	})
+	discord.AddHandler(func(discord *discordgo.Session, chunk *discordgo.GuildMembersChunk) {
+		done := true
+		for i := 0; i < len(discord.State.Guilds); i++ {
+			done = done || len(discord.State.Guilds[i].Members) == discord.State.Guilds[i].MemberCount
+		}
+		if done {
+			cb(discord)
+		}
+	})
 }

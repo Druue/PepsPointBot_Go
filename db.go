@@ -54,17 +54,26 @@ func openDBConnection() {
 }
 
 func startupAddAllUsers(users []string) {
-	q := ""
-	usersInterface := make([]interface{}, len(users))
-	for i := 0; i < len(users); i++ {
-		usersInterface[i] = users[i]
-		q += "INSERT INTO users (discord_id) VALUES ($" + strconv.Itoa(i+1) + ")"
+	query := "INSERT INTO users (discord_id) VALUES "
+	values := []interface{}{}
+	for i, s := range users {
+		values = append(values, s)
+		numFields := 1
+		n := i * numFields
+
+		query += `(`
+		for j := 0; j < numFields; j++ {
+			query += `$` + strconv.Itoa(n+j+1) + `,`
+		}
+		query = query[:len(query)-1] + `),`
 	}
-	_, err := DB.Query(q, usersInterface...)
+	query = query[:len(query)-1]
+	query += "ON CONFLICT DO NOTHING"
+	_, err := DB.Exec(query, values...)
 	logErr(err)
 }
 
-func setUsersNickname(user User) {
+func setUsersNickname(user *User) {
 	stmt, err := DB.Prepare("UPDATE users SET nick_name = $2 WHERE discord_id = $1")
 	logErr(err)
 	_, err = stmt.Exec(user.discordId, user.nickname)
@@ -95,7 +104,10 @@ func getUsersNicknameOr(discordId string, alternative string) string {
 }
 
 func giveUserPoints(giver string, receiver string, amount int64) {
-	DB.QueryRow("INSERT INTO points (id, receiver_id, giver_id, amount) VALUES ($4, $3, $2, $1) ON CONFLICT (id) UPDATE points SET amount = amount + $1 WHERE id = $4", amount, giver, receiver, giver+"_"+receiver)
+	_, err := DB.Query("INSERT INTO points (id, receiver_id, giver_id, amount) VALUES ($4, $3, $2, $1) ON CONFLICT (id) DO UPDATE SET amount = (points.amount + $1) WHERE points.id = $4", amount, giver, receiver, giver+"_"+receiver)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func getUsersPointsReceived(discordId string) ([]*Points, []string) {

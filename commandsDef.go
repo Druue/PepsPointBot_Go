@@ -48,6 +48,10 @@ func setName(arg []string, message *discordgo.MessageCreate) string {
 	// TODO check to make sure arg[0] is valid and good and
 	// has a nice cup of coofie and all that user input sanitization
 	//logName(message.Author.ID, arg[0])
+	setUsersNickname(&User{
+		discordId: message.Author.ID,
+		nickname:  arg[0],
+	})
 	return fmt.Sprintf("Set %s's nickname to be %s :thumbsup:", message.Author.ID, arg[0])
 }
 

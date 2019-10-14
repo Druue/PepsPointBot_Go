@@ -54,15 +54,6 @@ func main() {
 		err = discord.UpdateStatus(0, "A Friendly bot!")
 		errCheck("Error attempting to set status", err)
 
-		servers := discord.State.Guilds
-		fmt.Printf("BOT has started on %d servers", len(servers))
-		var allUsers []string
-		for i := 0; i < len(servers); i++ {
-			for j := 0; j < len(servers[i].Members); j++ {
-				allUsers = append(allUsers, servers[i].Members[j].User.ID)
-			}
-		}
-		startupAddAllUsers(allUsers)
 	})
 	discord.AddHandler(func(s *discordgo.Session, event *discordgo.GuildCreate) {
 		if event.Guild.Unavailable {
@@ -76,6 +67,16 @@ func main() {
 				return
 			}
 		}
+	})
+	go waitForMemberFetch(discord, func(discord *discordgo.Session) {
+		var allUsers []string
+		servers := discord.State.Guilds
+		for i := 0; i < len(servers); i++ {
+			for j := 0; j < len(servers[i].Members); j++ {
+				allUsers = append(allUsers, servers[i].Members[j].User.ID)
+			}
+		}
+		startupAddAllUsers(allUsers)
 	})
 
 	err = discord.Open()
