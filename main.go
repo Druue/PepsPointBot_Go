@@ -49,6 +49,9 @@ func main() {
 	funcName = "give"
 	funcMap[funcName] = NewFunction(funcName, givePoints, 2, 2)
 
+	funcName = "get-points-given"
+	funcMap[funcName] = NewFunction(funcName, getPointsGiven, 0, 1)
+
 	discord.AddHandler(commandHandler)
 	discord.AddHandler(func(discord *discordgo.Session, ready *discordgo.Ready) {
 		err = discord.UpdateStatus(0, "A Friendly bot!")

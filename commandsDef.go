@@ -74,6 +74,19 @@ func givePoints(arg []string, message *discordgo.MessageCreate) string {
 	return ":thumbsup:"
 }
 
+func getPointsGiven(arg []string, message *discordgo.MessageCreate) string {
+	points, nicknames := getUsersPointsGiven(message.Author.ID)
+	if len(arg) == 1 {
+		//return points given to individual person
+		return "no implemented yet"
+	}
+	re := "you have:"
+	for i := 0; i < len(points); i++ {
+		re += "\t" + nicknames[i] + " " + strconv.FormatInt(points[i].amount, 10) + " points\n"
+	}
+	return re
+}
+
 func helpCommands() string {
 	var buffer bytes.Buffer
 

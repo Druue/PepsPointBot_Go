@@ -104,20 +104,20 @@ func getUsersNicknameOr(discordId string, alternative string) string {
 }
 
 func giveUserPoints(giver string, receiver string, amount int64) {
-	_, err := DB.Query("INSERT INTO points (id, receiver_id, giver_id, amount) VALUES ($4, $3, $2, $1) ON CONFLICT (id) DO UPDATE SET amount = (points.amount + $1) WHERE points.id = $4", amount, giver, receiver, giver+"_"+receiver)
+	_, err := DB.Query("INSERT INTO points (id, receiver_id, giver_id, amount) VALUES ($4, $3, $2, $1) ON CONFLICT (id) DO UPDATE SET amount = (points.amount + $1) WHERE points.id = $4", amount, receiver, giver, giver+"_"+receiver)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func getUsersPointsReceived(discordId string) ([]*Points, []string) {
+func getUsersPointsReceived(discordId string) ([]*Points, []*sql.NullString) {
 	rows, err := DB.Query("SELECT points.giver_id, users.nick_name, points.amount FROM points INNER JOIN users ON users.discord_id = points.giver_id WHERE points.receiver_id = $1", discordId)
 	logErr(err)
 	var points []*Points
-	var nicknames []string
+	var nicknames []*sql.NullString
 	for rows.Next() {
 		var giverId string
-		var nickname string
+		var nickname *sql.NullString
 		var amount int64
 		err = rows.Scan(&giverId, &nickname, &amount)
 		logErr(err)
@@ -133,7 +133,7 @@ func getUsersPointsReceived(discordId string) ([]*Points, []string) {
 
 func getUsersPointsGiven(discordId string) ([]*Points, []string) {
 	rows, err := DB.Query("SELECT points.receiver_id, users.nick_name, points.amount FROM points INNER JOIN users ON users.discord_id = points.receiver_id WHERE points.giver_id = $1", discordId)
-	logErr(err)
+	errCheck("aaa", err)
 	var points []*Points
 	var nicknames []string
 	for rows.Next() {
