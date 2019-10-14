@@ -52,7 +52,7 @@ func setName(arg []string, message *discordgo.MessageCreate) string {
 		discordId: message.Author.ID,
 		nickname:  arg[0],
 	})
-	return fmt.Sprintf("Set %s's nickname to be %s :thumbsup:", message.Author.ID, arg[0])
+	return fmt.Sprintf("Set your nickname to be %s :thumbsup:", arg[0])
 }
 
 func getName(arg []string, message *discordgo.MessageCreate) string {
@@ -80,9 +80,52 @@ func getPointsGiven(arg []string, message *discordgo.MessageCreate) string {
 		//return points given to individual person
 		return "no implemented yet"
 	}
-	re := "you have:"
+	re := "you have given:\n"
 	for i := 0; i < len(points); i++ {
-		re += "\t" + nicknames[i] + " " + strconv.FormatInt(points[i].amount, 10) + " points\n"
+		var nick string
+		if nicknames[i].Valid {
+			nick = nicknames[i].String
+		} else {
+			member, err := discord.GuildMember(message.GuildID, points[i].receiver)
+			errCheck("couldnt get guild member", err)
+			if err != nil {
+				continue
+			}
+			if member.Nick == "" {
+				nick = member.User.Username
+			} else {
+				nick = member.Nick
+			}
+		}
+		re += "\t" + nick + ", " + strconv.FormatInt(points[i].amount, 10) + " of your points\n"
+	}
+	return re
+}
+
+func getPointsReceived(arg []string, message *discordgo.MessageCreate) string {
+	points, nicknames := getUsersPointsReceived(message.Author.ID)
+	if len(arg) == 1 {
+		//return points given to individual person
+		return "no implemented yet"
+	}
+	re := "you have\n"
+	for i := 0; i < len(points); i++ {
+		var nick string
+		if nicknames[i].Valid {
+			nick = nicknames[i].String
+		} else {
+			member, err := discord.GuildMember(message.GuildID, points[i].receiver)
+			errCheck("couldnt get guild member", err)
+			if err != nil {
+				continue
+			}
+			if member.Nick == "" {
+				nick = member.User.Username
+			} else {
+				nick = member.Nick
+			}
+		}
+		re += "\t" + nick + " " + strconv.FormatInt(points[i].amount, 10) + " points\n"
 	}
 	return re
 }

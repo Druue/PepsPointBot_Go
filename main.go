@@ -23,6 +23,7 @@ var (
 	//DB varaible to handle sql connection
 	DB      *sql.DB
 	discord *discordgo.Session
+	ready   = false
 )
 
 //Some core basics to get going
@@ -31,7 +32,7 @@ func main() {
 	discord = localDiscord
 	errCheck("Error creating discord session", err)
 	openDBConnection()
-	errCheck("Error estabilishing database session", err)
+	errCheck("Error establishing database session", err)
 	defer DB.Close()
 
 	funcName := "help"
@@ -52,9 +53,40 @@ func main() {
 	funcName = "get-points-given"
 	funcMap[funcName] = NewFunction(funcName, getPointsGiven, 0, 1)
 
-	discord.AddHandler(commandHandler)
+	funcName = "get-points-received"
+	funcMap[funcName] = NewFunction(funcName, getPointsReceived, 0, 1)
+
+	discord.AddHandler(func(discord *discordgo.Session, message *discordgo.MessageCreate) {
+		user := message.Author
+		if user.Bot {
+			return
+		}
+
+		if len(string(message.Content)) > 0 && string(message.Content[0]) == commandPrefix {
+			rawMessage := strings.Split(string(message.Content[1:]), " ")
+			funcName := rawMessage[0]
+			args := rawMessage[1:]
+			fun, ok := funcMap[funcName]
+			if ok {
+				if fun.minArgsLen > len(args) {
+					_, err := discord.ChannelMessageSend(message.ChannelID, "too few arguments")
+					errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
+					return
+				}
+				if fun.maxArgsLen < len(args) {
+					_, err := discord.ChannelMessageSend(message.ChannelID, "too many arguments")
+					errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
+					return
+				}
+				_, err := discord.ChannelMessageSend(message.ChannelID, fun.def(args, message))
+				errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
+			} else {
+				discord.ChannelMessageSend(message.ChannelID, "Invalid command")
+			}
+		}
+	})
 	discord.AddHandler(func(discord *discordgo.Session, ready *discordgo.Ready) {
-		err = discord.UpdateStatus(0, "A Friendly bot!")
+		err = discord.UpdateStatus(0, "gender non-conformity")
 		errCheck("Error attempting to set status", err)
 
 	})
@@ -63,57 +95,20 @@ func main() {
 			fmt.Printf("\nHi, the bot was here")
 			return
 		}
-
-		for _, channel := range event.Guild.Channels {
-			if channel.Name == "general" {
-				_, _ = s.ChannelMessageSend(channel.ID, helpCommands())
-				return
-			}
+	})
+	discord.AddHandler(func(s *discordgo.Session, chunk *discordgo.GuildMembersChunk) {
+		var users []string
+		for i := 0; i < len(chunk.Members); i++ {
+			users = append(users, chunk.Members[i].User.ID)
 		}
+		startupAddAllUsers(users)
 	})
 	go waitForMemberFetch(discord, func(discord *discordgo.Session) {
-		var allUsers []string
-		servers := discord.State.Guilds
-		for i := 0; i < len(servers); i++ {
-			for j := 0; j < len(servers[i].Members); j++ {
-				allUsers = append(allUsers, servers[i].Members[j].User.ID)
-			}
-		}
-		startupAddAllUsers(allUsers)
+		ready = true
 	})
 
 	err = discord.Open()
 	defer discord.Close()
 
 	<-make(chan struct{})
-}
-
-func commandHandler(discord *discordgo.Session, message *discordgo.MessageCreate) {
-	user := message.Author
-	if user.Bot {
-		return
-	}
-
-	if string(message.Content[0]) == commandPrefix {
-		rawMessage := strings.Split(string(message.Content[1:]), " ")
-		funcName := rawMessage[0]
-		args := rawMessage[1:]
-		fun, ok := funcMap[funcName]
-		if ok {
-			if fun.minArgsLen > len(args) {
-				_, err := discord.ChannelMessageSend(message.ChannelID, "too few arguments")
-				errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
-				return
-			}
-			if fun.maxArgsLen < len(args) {
-				_, err := discord.ChannelMessageSend(message.ChannelID, "too many arguments")
-				errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
-				return
-			}
-			_, err := discord.ChannelMessageSend(message.ChannelID, fun.def(args, message))
-			errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
-		} else {
-			discord.ChannelMessageSend(message.ChannelID, "Invalid command")
-		}
-	}
 }

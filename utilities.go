@@ -57,6 +57,9 @@ func getDescription(funcName string) (string, []string) {
 	case "get-points-given":
 		slice = []string{""}
 		return "Gives you the amount of points you have given away", slice
+	case "get-points-received":
+		slice = []string{""}
+		return "Gives you the amount of points other people have given to you", slice
 	default:
 		panic(fmt.Sprintf("%v", "No such function exists!"))
 	}
