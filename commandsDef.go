@@ -83,7 +83,6 @@ func setPrefix(arg []string, message *discordgo.MessageCreate) (string, ReponseA
 	logErr(err)
 	for i := 0; i < len(user.Roles); i++ {
 		role := user.Roles[i]
-		fmt.Println(role)
 		for j := 0; j < len(guildRoles); j++ {
 			if guildRoles[j].ID == role {
 				roleStr := strings.ToLower(guildRoles[j].Name)

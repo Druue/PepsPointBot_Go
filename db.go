@@ -98,6 +98,7 @@ func setPrefixForGuild(guildId string, prefix string) {
 	logErr(err)
 	_, err = stmt.Exec(guildId, prefix)
 	logErr(err)
+	defer stmt.Close()
 }
 
 func getGuildPrefix(guildId string) *string {
@@ -109,6 +110,7 @@ func getGuildPrefix(guildId string) *string {
 		logErr(err)
 		return &prefix
 	}
+	defer rows.Close()
 	return nil
 }
 
@@ -121,6 +123,7 @@ func getUserFromNickname(nickname string) sql.NullString {
 		logErr(err)
 		return discordId
 	}
+	defer rows.Close()
 	return sql.NullString{
 		String: "",
 		Valid:  false,
@@ -132,6 +135,7 @@ func setUsersNickname(user *User) {
 	logErr(err)
 	_, err = stmt.Exec(user.discordId, user.nickname)
 	logErr(err)
+	defer stmt.Close()
 }
 
 func getUser(discordId string) *User {
@@ -146,6 +150,7 @@ func getUser(discordId string) *User {
 			discordId: discordId,
 		}
 	}
+	defer rows.Close()
 	return nil
 }
 
@@ -158,10 +163,11 @@ func getUsersNicknameOr(discordId string, alternative sql.NullString) sql.NullSt
 }
 
 func giveUserPoints(giver string, receiver string, amount int64) {
-	_, err := DB.Query("INSERT INTO points (id, receiver_id, giver_id, amount) VALUES ($4, $3, $2, $1) ON CONFLICT (id) DO UPDATE SET amount = (points.amount + $1) WHERE points.id = $4", amount, receiver, giver, giver+"_"+receiver)
+	rows, err := DB.Query("INSERT INTO points (id, receiver_id, giver_id, amount) VALUES ($4, $3, $2, $1) ON CONFLICT (id) DO UPDATE SET amount = (points.amount + $1) WHERE points.id = $4", amount, receiver, giver, giver+"_"+receiver)
 	if err != nil {
 		panic(err)
 	}
+	defer rows.Close()
 }
 
 func getUsersPointsReceived(discordId string) ([]*Points, []sql.NullString) {
@@ -182,6 +188,7 @@ func getUsersPointsReceived(discordId string) ([]*Points, []sql.NullString) {
 			amount:   amount,
 		})
 	}
+	defer rows.Close()
 	return points, nicknames
 }
 
@@ -193,6 +200,7 @@ func getUsersPointsReceivedFromOtherUser(receiverId string, giverId string) sql.
 		err = rows.Scan(&amount)
 		return amount
 	}
+	defer rows.Close()
 	return sql.NullInt64{
 		Int64: 0,
 		Valid: false,
@@ -217,5 +225,6 @@ func getUsersPointsGiven(discordId string) ([]*Points, []sql.NullString) {
 			amount:   amount,
 		})
 	}
+	defer rows.Close()
 	return points, nicknames
 }
