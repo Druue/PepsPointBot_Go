@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 )
 
 func noRows(err error) {
@@ -25,22 +23,6 @@ func errCheck(msg string, err error) {
 		fmt.Printf("%s: %+v", msg, err)
 		panic(err)
 	}
-}
-
-func getToken() string {
-	file, err := os.Open("TOKEN")
-	logErr(err)
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	re := ""
-
-	for scanner.Scan() {
-		re += scanner.Text()
-	}
-
-	return re
 }
 
 func parseUserIDFromAt(user string) (string, bool) {

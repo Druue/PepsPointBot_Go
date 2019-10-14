@@ -27,11 +27,10 @@ var (
 
 //Some core basics to get going
 func main() {
-	localDiscord, err := discordgo.New("Bot " + getToken())
+	localDiscord, err := discordgo.New("Bot " + SECRET.DISCORD_TOKEN)
 	discord = localDiscord
 	errCheck("Error creating discord session", err)
-
-	DB, err := openDBConnection()
+	openDBConnection()
 	errCheck("Error estabilishing database session", err)
 	defer DB.Close()
 

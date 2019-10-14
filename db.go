@@ -42,7 +42,7 @@ amount: in64/bigint
 
 */
 
-func openDBConnection() (*sql.DB, error) {
+func openDBConnection() {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		SECRET.DB_HOST, SECRET.DB_PORT, SECRET.DB_USER, SECRET.DB_PASSWORD, SECRET.DB_NAME)
@@ -50,15 +50,17 @@ func openDBConnection() (*sql.DB, error) {
 	logErr(err)
 	err = db.Ping()
 	logErr(err)
-	return db, nil
+	DB = db
 }
 
 func startupAddAllUsers(users []string) {
 	q := ""
+	usersInterface := make([]interface{}, len(users))
 	for i := 0; i < len(users); i++ {
+		usersInterface[i] = users[i]
 		q += "INSERT INTO users (discord_id) VALUES ($" + strconv.Itoa(i+1) + ")"
 	}
-	_, err := DB.Query(q, users)
+	_, err := DB.Query(q, usersInterface...)
 	logErr(err)
 }
 
