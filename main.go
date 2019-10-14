@@ -73,7 +73,7 @@ func main() {
 	funcName = "points"
 	funcMap[funcName] = NewFunction(funcName, pointsCommand, 0, 1, &Description{
 		description:    "Prints the amount of points",
-		argDescription: []string{"Returns the amount of points of the pinged user, if this is not set, it will return all points you have received"},
+		argDescription: []string{"Returns the amount of points of the pinged user, if this is not set, it will return all points you have given"},
 	})
 
 	discord.AddHandler(func(discord *discordgo.Session, message *discordgo.MessageCreate) {
