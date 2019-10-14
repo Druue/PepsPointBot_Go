@@ -3,200 +3,137 @@ package main
 import (
 	"database/sql"
 	"fmt"
-
-	. "github.com/ahmetb/go-linq"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
+	"strconv"
 )
 
-var (
-	transactions []*Transaction
-	names        = make(map[string]string)
-)
-
-//Transaction all transactions between users - Deprecated
-type Transaction struct {
-	origin    string
-	recipient string
-	amount    int
+type User struct {
+	discordId string
+	nickname  string
 }
-
-//Points the amount and who have the points
 type Points struct {
-	origin string
-	amount int
-}
-
-//UserInfo a users id, name and points
-type UserInfo struct {
-	id     int
-	name   string
-	points []Points
-}
-
-func openDBConnection(dbCon string) (*sql.DB, error) {
-	conn, err := sql.Open("sqlite3", dbCon)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = conn.Ping(); err != nil {
-		return nil, err
-	}
-
-	return conn, nil
+	giver    string
+	receiver string
+	amount   int64
 }
 
 /*
-	user_info						transaction_info
 
-	id      |  name  |				giver  | recipient | amount
-	string  | string |				string |  string   | int
+     users
+__________________
+discord_id: text
+nick_name: text
+
+
+
+
+
+
+
+
+points
+______________
+id: text
+receiver_id: text
+giver_id: text
+amount: in64/bigint
+
+
+
 */
 
-func logName(id string, name string) {
-	updateName := `
-		INSERT OR REPLACE INTO user_info(id, name)
-		VALUES(?, ?)`
-	_, err := DB.Exec(updateName, id, name)
+func openDBConnection() (*sql.DB, error) {
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		SECRET.DB_HOST, SECRET.DB_PORT, SECRET.DB_USER, SECRET.DB_PASSWORD, SECRET.DB_NAME)
+	db, err := sql.Open("postgres", psqlInfo)
 	logErr(err)
+	err = db.Ping()
+	logErr(err)
+	return db, nil
 }
 
-func logTransaction(giver string, recipient string, amount int) {
-	fmt.Printf("\nWe made it to logTransaction()")
-	insertTransaction := `
-		INSERT INTO transaction_info (giver, recipient, amount)
-		VALUES (?, ?, ?)`
-	_, err := DB.Exec(insertTransaction, giver, recipient, amount)
-	logErr(err)
-}
-
-func getPointsList() []UserInfo {
-	var (
-		id   int
-		name string
-	)
-
-	rows, err := DB.Query("SELECT user_id, name FROM user_info")
-	logErr(err)
-	defer rows.Close()
-
-	var users []UserInfo
-	for rows.Next() {
-		err := rows.Scan(&id, &name)
-		logErr(err)
-
-		users = append(users, getUserPoints(id))
+func startupAddAllUsers(users []string) {
+	q := ""
+	for i := 0; i < len(users); i++ {
+		q += "INSERT INTO users (discord_id) VALUES ($" + strconv.Itoa(i+1) + ")"
 	}
-
-	err = rows.Err()
+	_, err := DB.Query(q, users)
 	logErr(err)
-
-	return users
 }
 
-func getUserPoints(userid int) UserInfo {
-	var (
-		username string
-		giverid  int
-	)
-	rows, err := DB.Query(`
-		SELECT giver.id, transaction.recipient
-		FROM transaction_info transaction, user_info giver
-			INNER JOIN user_info user 
-				ON (recipient = user.name AND user.id = ?)
-			WHERE giver.name = transaction.giver
-		`, userid)
+func setUsersNickname(user User) {
+	stmt, err := DB.Prepare("UPDATE users SET nick_name = $2 WHERE discord_id = $1")
 	logErr(err)
-
-	var points []Points
-	for rows.Next() {
-		err := rows.Scan(&giverid, &username)
-		logErr(err)
-
-		points = append(points, getUserPointsFromGiver(userid, giverid))
-	}
-
-	err = rows.Err()
+	_, err = stmt.Exec(user.discordId, user.nickname)
 	logErr(err)
-
-	return UserInfo{
-		id:     userid,
-		name:   username,
-		points: points,
-	}
 }
 
-func getUserPointsFromGiver(userid int, giverid int) Points {
-	rows, err := DB.Query(`
-		SELECT transaction_info.amount
-		FROM transaction_info, user_info as user
-			INNER JOIN user_info as giver 
-				ON (transaction_info.giver = giver.name 
-					AND giver.ID = ?)
-			WHERE (transaction_info.recipient = user.name
-					AND user.ID = ?)
-	`, giverid, userid)
+func getUser(discordId string) *User {
+	rows, err := DB.Query("SELECT nick_name FROM users WHERE discord_id = $1", discordId)
 	logErr(err)
-
-	var points Points
-	err = DB.QueryRow(`
-		SELECT name FROM user_info
-		WHERE user_info.ID = ?
-		`, giverid).Scan(&points.origin)
-
-	noRows(err)
-	logErr(err)
-
-	currPoints := 0
 	for rows.Next() {
-		err := rows.Scan(&currPoints)
+		var nickname string
+		err = rows.Scan(&nickname)
 		logErr(err)
-
-		points.amount += currPoints
-		if points.amount < 0 {
-			points.amount = 0
-			return points
+		return &User{
+			nickname:  nickname,
+			discordId: discordId,
 		}
 	}
-
-	return points
+	return nil
 }
 
-// IGNORE -- LOCAL TESTING
-
-func setNameTest(id string, name string) {
-	names[id] = name
-}
-
-func getNameTest(id string) (string, bool) {
-	name, ok := names[id]
-	return name, ok
-}
-
-func getNameOr(id string, otherwise string) string {
-	name, ok := getNameTest(id)
-	if ok {
-		return name
+func getUsersNicknameOr(discordId string, alternative string) string {
+	user := getUser(discordId)
+	if user == nil {
+		return alternative
 	}
-	return otherwise
+	return user.nickname
 }
 
-func addTransaction(origin string, recipient string, amount int) {
-	var possiblePoints []*Transaction
-	From(transactions).WhereT(func(p *Transaction) bool {
-		return p.origin == origin && p.recipient == recipient
-	}).ToSlice(&possiblePoints)
+func giveUserPoints(giver string, receiver string, amount int64) {
+	DB.QueryRow("INSERT INTO points (id, receiver_id, giver_id, amount) VALUES ($4, $3, $2, $1) ON CONFLICT (id) UPDATE points SET amount = amount + $1 WHERE id = $4", amount, giver, receiver, giver+"_"+receiver)
+}
 
-	if len(possiblePoints) == 0 {
-		transaction := &Transaction{
-			origin:    origin,
-			recipient: recipient,
-			amount:    amount,
-		}
-		transactions = append(transactions, transaction)
-	} else {
-		From(transactions).ForEachT(func(p *Transaction) {
-			p.amount += amount
+func getUsersPointsReceived(discordId string) ([]*Points, []string) {
+	rows, err := DB.Query("SELECT points.giver_id, users.nick_name, points.amount FROM points INNER JOIN users ON users.discord_id = points.giver_id WHERE points.receiver_id = $1", discordId)
+	logErr(err)
+	var points []*Points
+	var nicknames []string
+	for rows.Next() {
+		var giverId string
+		var nickname string
+		var amount int64
+		err = rows.Scan(&giverId, &nickname, &amount)
+		logErr(err)
+		nicknames = append(nicknames, nickname)
+		points = append(points, &Points{
+			giver:    giverId,
+			receiver: discordId,
+			amount:   amount,
 		})
 	}
+	return points, nicknames
+}
+
+func getUsersPointsGiven(discordId string) ([]*Points, []string) {
+	rows, err := DB.Query("SELECT points.receiver_id, users.nick_name, points.amount FROM points INNER JOIN users ON users.discord_id = points.receiver_id WHERE points.giver_id = $1", discordId)
+	logErr(err)
+	var points []*Points
+	var nicknames []string
+	for rows.Next() {
+		var giverId string
+		var nickname string
+		var amount int64
+		err = rows.Scan(&giverId, &nickname, &amount)
+		logErr(err)
+		nicknames = append(nicknames, nickname)
+		points = append(points, &Points{
+			giver:    giverId,
+			receiver: discordId,
+			amount:   amount,
+		})
+	}
+	return points, nicknames
 }

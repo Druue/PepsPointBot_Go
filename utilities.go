@@ -62,12 +62,12 @@ func getDescription(funcName string) (string, []string) {
 	case "set-prefix":
 		slice = []string{"the new prefix"}
 		return "Updates the prefix that the bot uses to identify commands", slice
-	case "set-name":
-		slice = []string{"your new name"}
-		return "Sets your own name, which the bot uses when printing how many points people have", slice
-	case "get-name":
+	case "set-nickname":
+		slice = []string{"your new nickname"}
+		return "Sets your own nickname, which the bot uses when printing how many points people have", slice
+	case "get-nickname":
 		slice = []string{}
-		return "return the name this bot uses to refeer to you", slice
+		return "return the nickname this bot uses to refeer to you", slice
 	case "give":
 		slice = []string{"the user in question", "the amount of points (must be a string)"}
 		return "Gives a user an amount of your points", slice

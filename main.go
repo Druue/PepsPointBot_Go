@@ -8,6 +8,15 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+type Secret struct {
+	DISCORD_TOKEN string
+	DB_USER       string
+	DB_PASSWORD   string
+	DB_NAME       string
+	DB_HOST       string
+	DB_PORT       string
+}
+
 var (
 	funcMap       = make(map[string]*Function)
 	commandPrefix = "?"
@@ -22,7 +31,7 @@ func main() {
 	discord = localDiscord
 	errCheck("Error creating discord session", err)
 
-	DB, err := openDBConnection("Data Source=./PepPointsDBTest.db;Version=3") //??
+	DB, err := openDBConnection()
 	errCheck("Error estabilishing database session", err)
 	defer DB.Close()
 
@@ -32,10 +41,10 @@ func main() {
 	funcName = "set-prefix"
 	funcMap[funcName] = NewFunction(funcName, setPrefix, 1, 1)
 
-	funcName = "set-name"
+	funcName = "set-nickname"
 	funcMap[funcName] = NewFunction(funcName, setName, 1, 1)
 
-	funcName = "get-name"
+	funcName = "get-nickname"
 	funcMap[funcName] = NewFunction(funcName, getName, 0, 0)
 
 	funcName = "give"
@@ -48,6 +57,13 @@ func main() {
 
 		servers := discord.State.Guilds
 		fmt.Printf("BOT has started on %d servers", len(servers))
+		var allUsers []string
+		for i := 0; i < len(servers); i++ {
+			for j := 0; j < len(servers[i].Members); j++ {
+				allUsers = append(allUsers, servers[i].Members[j].User.ID)
+			}
+		}
+		startupAddAllUsers(allUsers)
 	})
 	discord.AddHandler(func(s *discordgo.Session, event *discordgo.GuildCreate) {
 		if event.Guild.Unavailable {

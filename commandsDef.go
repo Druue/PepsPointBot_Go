@@ -9,7 +9,7 @@ import (
 )
 
 //Function struct handles the varying parts that go into the various bot commands
-//Their name, their description, their actual definition etc
+//Their nickname, their description, their actual definition etc
 type Function struct {
 	name           string
 	description    string
@@ -48,7 +48,7 @@ func setName(arg []string, message *discordgo.MessageCreate) string {
 	// TODO check to make sure arg[0] is valid and good and
 	// has a nice cup of coofie and all that user input sanitization
 	//logName(message.Author.ID, arg[0])
-	return fmt.Sprintf("Set %s's name to be %s :thumbsup:", message.Author.ID, arg[0])
+	return fmt.Sprintf("Set %s's nickname to be %s :thumbsup:", message.Author.ID, arg[0])
 }
 
 func getName(arg []string, message *discordgo.MessageCreate) string {
