@@ -33,6 +33,7 @@ var SECRET = &Secret{
 
 ## TODO
 - ?whois command, that will parse the user given and return the user
+- "Maybe make it so that if there's two Emilies, it defaults to the one with a set nickname, and if someone has the same nick, then inform the user that the must specify which person they meanLike .givepoints Emilie(0) or .givepoints Emilie(1)", from Emilie
 
 ## Contributing
 1. Fork it (<https://github.com/{usr}/{proj_name}/{fork}>)
