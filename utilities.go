@@ -28,16 +28,16 @@ func errCheck(msg string, err error) {
 
 func parseUserIDFromAt(user string, guildID string) (string, bool) {
 	if !(len(user) > 3 && user[0:2] == "<@" && user[len(user)-1:] == ">") {
+		dbUser := getUserFromNickname(user)
+		if dbUser.Valid {
+			return dbUser.String, true
+		}
 		guild, err := discord.Guild(guildID)
 		errCheck("error \"in parse user id from at\", when finding guilds", err)
 		for _, m := range guild.Members {
 			if m.Nick == user || m.User.Username == user {
 				return m.User.ID, true
 			}
-		}
-		dbUser := getUserFromNickname(user)
-		if dbUser.Valid {
-			return dbUser.String, true
 		}
 		return "", false
 	}
