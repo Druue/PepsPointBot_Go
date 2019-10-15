@@ -163,9 +163,21 @@ func getUsersNicknameOr(discordId string, alternative sql.NullString) sql.NullSt
 }
 
 func giveUserPoints(giver string, receiver string, amount int64) {
-	rows, err := DB.Query("INSERT INTO points (id, receiver_id, giver_id, amount) VALUES ($4, $3, $2, $1) ON CONFLICT (id) DO UPDATE SET amount = (points.amount + $1) WHERE points.id = $4", amount, receiver, giver, giver+"_"+receiver)
+	id := giver + "_" + receiver
+	rows, err := DB.Query("INSERT INTO points (id, receiver_id, giver_id, amount) VALUES ($4, $3, $2, $1) ON CONFLICT (id) DO UPDATE SET amount = (points.amount + $1) WHERE points.id = $4 RETURNING points.amount", amount, receiver, giver, id)
 	if err != nil {
 		panic(err)
+	}
+	for rows.Next() {
+		var amount int64
+		err = rows.Scan(&amount)
+		if amount == 0 {
+			rows, err := DB.Query("DELETE FROM points WHERE id = $1", id)
+			if err != nil {
+				panic(err)
+			}
+			defer rows.Close()
+		}
 	}
 	defer rows.Close()
 }

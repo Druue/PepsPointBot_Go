@@ -99,7 +99,7 @@ func main() {
 					return
 				}
 				if fun.maxArgsLen < len(args) {
-					_, err := discord.ChannelMessageSend(message.ChannelID, "too many arguments")
+					_, err := discord.ChannelMessageSend(message.ChannelID, "too many arguments, check the amount of spaces")
 					errCheck("Oepsie woepsie, er was een stukkiewukkie in 't command handler", err)
 					return
 				}
