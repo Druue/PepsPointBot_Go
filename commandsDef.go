@@ -156,8 +156,12 @@ func pointsCommand(arg []string, message *discordgo.MessageCreate) (string, Repo
 		}
 		return re, ResponseReply
 	} else if len(arg) == 1 {
-		points, _ := getUsersPointsReceived(message.Author.ID)
-		re := getPrintableName(message.Author.ID, message.GuildID) + " has got\n"
+		usrId, ok := parseUserIDFromAt(arg[0], message.GuildID)
+		if !ok {
+			return "arg0 is not a user", ResponseReply
+		}
+		points, _ := getUsersPointsReceived(usrId)
+		re := getPrintableName(usrId, message.GuildID) + " has got\n"
 		for i := 0; i < len(points); i++ {
 			re += "\t" + strconv.FormatInt(points[i].amount, 10) + " " + getPrintableName(points[i].giver, message.GuildID) + " points\n"
 		}
