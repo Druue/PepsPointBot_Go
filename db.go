@@ -21,7 +21,7 @@ type Points struct {
 
      users
 __________________
-discord_id: text
+discord_id: text PRIMARY KEY NOT NULL
 nick_name: text
 
 
@@ -33,10 +33,20 @@ nick_name: text
 
 points
 ______________
-id: text
-receiver_id: text
-giver_id: text
+id: text PRIMARY KEY NOT NULL
+receiver_id: text NOT NULL
+giver_id: text NOT NULL
 amount: in64/bigint
+
+
+
+
+
+
+prefixes
+________________
+guild_id: text PRIMARY KEY NOT NULL
+prefix: text NOT NULL
 
 
 

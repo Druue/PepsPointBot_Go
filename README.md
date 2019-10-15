@@ -13,10 +13,11 @@ https://github.com/Druue
 
 ## Testing
 1. have a postgres database ready
+2. the database structure is described in db.go the top of https://github.com/Druue/PepsPointBot_Go/blob/master/db.go
 2. have a discord bot
 3. clone it
 4. create a file in the root folder called SECRET.go (actually you can call it whatever you want, but with SECRET.go it's already gitignored)
-5. write stuff like postgres data and discord token in there, it should look something like this
+5. write stuff like postgres data and discord token in there, it should look something like this 
 ```go
 package main
 
@@ -28,7 +29,7 @@ var SECRET = &Secret{
 	DB_PASSWORD: "super_secure_password",
 	DB_USER: "super_secure_user",
 }
-```
+``` 
 
 ## TODO
 - ?whois command, that will parse the user given and return the user
