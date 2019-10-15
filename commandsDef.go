@@ -152,7 +152,7 @@ func pointsCommand(arg []string, message *discordgo.MessageCreate) (string, Repo
 					nick = member.Nick
 				}
 			}
-			re += "\t" + nick + ", " + strconv.FormatInt(points[i].amount, 10) + " of your points\n"
+			re += "\t" + nick + " " + strconv.FormatInt(points[i].amount, 10) + " of your points\n"
 		}
 		return re, ResponseReply
 	} else if len(arg) == 1 {

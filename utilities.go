@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"log"
+	"strings"
 )
 
 func noRows(err error) {
@@ -85,4 +86,47 @@ func waitForMemberFetch(discord *discordgo.Session, cb func(discord *discordgo.S
 			cb(discord)
 		}
 	})
+}
+
+func commandLineArgSplit(str string) (string, []string) {
+	commandNameIndex := strings.Index(str, " ")
+	if commandNameIndex == -1 {
+		return str, []string{}
+	}
+	commandName := str[:commandNameIndex]
+	argsStr := str[commandNameIndex+1:]
+	prevChar := ""
+	strBuilder := ""
+	ignoreSpace := false
+	var args []string
+	for i := 0; i < len(argsStr); i++ {
+		fmt.Println()
+		char := string(argsStr[i])
+		if prevChar == "\\" {
+			strBuilder += char
+			prevChar = char
+			continue
+		}
+		if char == "\\" {
+			prevChar = char
+			continue
+		}
+		if char == "\"" {
+			ignoreSpace = !ignoreSpace
+			prevChar = char
+			continue
+		}
+		if char == " " && !ignoreSpace {
+			if prevChar != " " {
+				args = append(args, strBuilder)
+				strBuilder = ""
+			}
+			prevChar = char
+			continue
+		}
+		strBuilder += char
+		prevChar = char
+	}
+	args = append(args, strBuilder)
+	return commandName, args
 }

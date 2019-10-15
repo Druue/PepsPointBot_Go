@@ -3,8 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"strings"
-
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -88,9 +86,7 @@ func main() {
 		}
 
 		if len(message.Content) > len(*prefix) && message.Content[0:len(*prefix)] == *prefix {
-			rawMessage := strings.Split(message.Content[1:], " ")
-			funcName := rawMessage[0]
-			args := rawMessage[1:]
+			funcName, args := commandLineArgSplit(message.Content[1:])
 			fun, ok := funcMap[funcName]
 			if ok {
 				if fun.minArgsLen > len(args) {
