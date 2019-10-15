@@ -74,10 +74,20 @@ func main() {
 		argDescription: []string{"Returns the amount of points of the pinged user, if this is not set, it will return all points you have given"},
 	})
 
+	funcName = "whois"
+	funcMap[funcName] = NewFunction(funcName, whoIsCommand, 1, 1, &Description{
+		description:    "describes who a person is",
+		argDescription: []string{"the person you're interesting in knowing "},
+	})
+
 	discord.AddHandler(func(discord *discordgo.Session, message *discordgo.MessageCreate) {
 		user := message.Author
 		if user.Bot {
 			return
+		}
+		if !ready {
+			_, err := discord.ChannelMessageSend(message.ChannelID, "sorry, im not ready yet, database sync havnt been done yet")
+			errCheck("an error happened when telling users we arent ready it", err)
 		}
 		prefix := getGuildPrefix(message.GuildID)
 		if prefix == nil {

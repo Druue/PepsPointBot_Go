@@ -33,8 +33,6 @@ var SECRET = &Secret{
 
 ## TODO
 - ?whois command, that will parse the user given and return the user
-- better argument handling, so i could do `?setnick "the awesome"`  and it would accept "the  awesome" as one argument
-- better argument handling, so double space is counted as one space
 
 ## Contributing
 1. Fork it (<https://github.com/{usr}/{proj_name}/{fork}>)

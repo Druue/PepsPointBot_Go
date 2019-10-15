@@ -171,6 +171,16 @@ func pointsCommand(arg []string, message *discordgo.MessageCreate) (string, Repo
 	}
 }
 
+func whoIsCommand(arg []string, message *discordgo.MessageCreate) (string, ReponseActionType) {
+	id, ok := parseUserIDFromAt(arg[0], message.GuildID)
+	if !ok {
+		return fmt.Sprintf("Recipient not defined, what is a \"%s\" :thinking:", arg[0]), ResponseReply
+	}
+	usr, err := discord.User(id)
+	errCheck("couldnt get the user in the whois command", err)
+	return "its " + usr.Username + ":" + usr.Discriminator, ResponseReply
+}
+
 func givePoints(arg []string, message *discordgo.MessageCreate) (string, ReponseActionType) {
 	recipientID, ok := parseUserIDFromAt(arg[0], message.GuildID)
 	if !ok {
