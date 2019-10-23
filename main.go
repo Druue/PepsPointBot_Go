@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -32,51 +33,72 @@ func main() {
 	errCheck("Error establishing database session", err)
 	defer DB.Close()
 
+	// Prints out a list of all the currently available bot commands,
+	// descriptions thereof, and an example of how to use them.
+	// help
 	funcName := "help"
 	funcMap[funcName] = NewFunction(funcName, help, 0, 0, &Description{
 		description:    "Returns the list of commands and their descriptions",
 		argDescription: []string{},
 	})
 
-	funcName = "prefix"
+	// Sets the prefix the bot responds to when users issue commands.
+	// prefix <arg0>
+	// arg0: prefix to use (Char)
+	funcName = "setPrefix"
 	funcMap[funcName] = NewFunction(funcName, setPrefix, 1, 1, &Description{
 		description:    "Updates the prefix that the bot uses to identify commands",
 		argDescription: []string{"Your new prefix"},
 	})
 
-	funcName = "setnick"
+	// Sets the user's nickname to the provided string
+	// setnick <arg0>
+	// arg0: provided nickname to switch to (String)
+	funcName = "setNick"
 	funcMap[funcName] = NewFunction(funcName, setNick, 1, 1, &Description{
 		description:    "Sets your own nickname, which the bot uses when printing how many points people have",
 		argDescription: []string{"Your new nickname"},
 	})
 
-	funcName = "getnick"
+	// Returns the currently stored nickname of the user who issued the command
+	funcName = "getNick"
 	funcMap[funcName] = NewFunction(funcName, getNick, 0, 0, &Description{
 		description:    "Returns the nickname this bot uses to refer to you",
 		argDescription: []string{},
 	})
 
-	funcName = "clearnick"
+	// Clears the nickname the bot currently has stored associated
+	// to the user who issued the command
+	funcName = "resetNick"
 	funcMap[funcName] = NewFunction(funcName, clearNick, 0, 0, &Description{
 		description:    "Resets your nickname for the bot",
 		argDescription: []string{},
 	})
 
-	funcName = "givepoints"
+	// Gives a target user some number of points from the issuing user
+	// user1: givePoints @user2 20
+	// -> Gives user2 20 points of type user1
+	funcName = "givePoints"
 	funcMap[funcName] = NewFunction(funcName, givePoints, 2, 2, &Description{
 		description:    "Gives a user an amount of your points",
 		argDescription: []string{"The user in question", "The amount of points (must be an integer)"},
 	})
 
+	// Prints out of a list of either your own, or a target user's points
+	// and who they were issued by
+	// user1: points -> prints out user1's point tallies
+	// user1: points user2 -> prints out user2's point tallies
 	funcName = "points"
 	funcMap[funcName] = NewFunction(funcName, pointsCommand, 0, 1, &Description{
 		description:    "Prints the amount of points",
 		argDescription: []string{"Returns the amount of points of the pinged user, if this is not set, it will return all points you have given"},
 	})
 
-	funcName = "whois"
+	// Returns the discord tag of the supplied target user
+	// whois user -> returns usertag#xyzw for user
+	funcName = "whoIs"
 	funcMap[funcName] = NewFunction(funcName, whoIsCommand, 1, 1, &Description{
-		description:    "describes who a person is",
+		description:    "Describes who a person is",
 		argDescription: []string{"the person you're interesting in knowing "},
 	})
 
@@ -87,7 +109,7 @@ func main() {
 		}
 		if !ready {
 			_, err := discord.ChannelMessageSend(message.ChannelID, "sorry, im not ready yet, database sync havnt been done yet")
-			errCheck("an error happened when telling users we arent ready it", err)
+			errCheck("An error happened when telling users we arent ready yet", err)
 		}
 		prefix := getGuildPrefix(message.GuildID)
 		if prefix == nil {
@@ -129,7 +151,7 @@ func main() {
 		}
 	})
 	discord.AddHandler(func(discord *discordgo.Session, ready *discordgo.Ready) {
-		err = discord.UpdateStatus(0, "gender non-conformity")
+		err = discord.UpdateStatus(0, "Gender non-conformity")
 		errCheck("Error attempting to set status", err)
 		var guilds []string
 		for _, s := range ready.Guilds {
